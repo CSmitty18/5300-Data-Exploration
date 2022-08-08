@@ -1,7 +1,9 @@
 ---
 title: "Write Up - Christian Smith"
-output: html_document
-date: '2022-08-08'
+output:
+  html_document: default
+  pdf_document: default
+date: '2022-08-07'
 ---
 
 ```{r setup, include=FALSE}
@@ -13,6 +15,69 @@ knitr::opts_chunk$set(echo = TRUE)
 As I was working through this project and code I found myself doing quite a bit of cleaning. Whether it was me having to go back to include another variable, or adding in a new variable to account for time periods etc., I spent a fair amount of time wrangling the data. There was a lot of back tracking and rerunning the code in order to start to get it to a comfortable place where I felt the data was in a good spot for cleaning after working out many of the kinks. After splitting out the data by pre college scorecard release and post college scorecard release, I also did a split for low and high earning schools, the way I did this was taking the median of the median income, and the mean of the median income, and since the two numbers were relatively close at 37,800 for the median and 39,036 for the mean. Since they were close and wanted to account for both, I took the difference if the two and set the split for high and low at 38,400. After that, I wanted to do a basic quick view of the differences in median income and mean median income just as a way to get a sense of the changes between the two before I started to get into the meat of running models and regressions. What surprised me was that it didn't show much of a change at all from pre and post in terms of median income 10 years after graduation. In fact it actually decreased from afterwards, which I would not have expected from the initial question and simply from intuition. So I started to think about reasons this might be in order to get variables for them or to be able to measure them. I thought about the differences in degrees and figured that it might also have a large part to do with median income not changing as the type of degree you get will dictate the industry you go into after graduation (for the most part, there are obviously some people who make a pivot). But then I thought about how the effects from that should balance out either way, and the question we want to look into is by school not my degree. So I thought about cost as well, knowing that the cost of the college also has an impact on whether people go to that school based on family wealth/in state opportunities etc. Obviously if Harvard or Yale were as cheap as in state schools then a lot more people would go, but again, the question we are trying to answer is whether the scorecard had an effect on people going to schools with higher median incomes, and being able to afford a certain school does not change. So when I went back to the data I figured there were a couple ways to measure it, we could look at the type of school as listed by the "CONTROL" variable, we could take a look at a certain split out between high and low earnings people and see if there are differences there based on control. We also could look at the interaction between these variables and see if those account for more explanation of the numbers. So as I started thinking about that, I played around with a lot of combinations based on the pre and post scorecard release, getting an idea of the relationship between certain variables in high and low income people, both before and after the scorecard. I also played with some controls and a couple interactions, but most of them weren't giving me a great r squared even with significant level p values. After going through all of these and not wanting to use them, I decided to take a look at a few basic graphs to see the trends over time, and what I saw was that Pre scorecard data remained fairly steady across time in regards to median income, but Post scorecard data showed a steady decline over time in terms of median income. Based on these plots below, I decided to do some comparisons of models Pre and Post scorecard now that I had a better sense of direction and where I should focus the analysis to go. Now I also did some analysis on those same variables but used the High and Low earning schools as well, but since the low earning schools had a pretty consistent median income over time, it wouldn't impact the trends we saw, so I just decided to use to whole Pre and Post sets. I also am aware about this not really showing a whole lot graphically, but I felt that because it brought me the right place and took me to the final models, it was worth including, even though a lot of my analysis and takeaways were not exactly what I needed to be looking at. 
 
 ```{r}
+# Libraries
+library(ggplot2)
+library(tidyverse)
+library(huxtable)
+library(readr)
+library(purrr)
+library(lubridate)
+library(estimatr)
+library(fixest)
+library(jtools)
+library(ggstance)
+library(ggplot2)
+
+#Data Sets
+trends <- list.files(path = "Data", pattern = 'trends_up_to_')
+gtrend <- map_df(trends, read_csv)
+college_score <- read_csv("Data/Most+Recent+Cohorts+(Scorecard+Elements).csv")
+
+rm_dup <- read_csv("Data/id_name_link.csv") %>% rename(OPEID = opeid) %>%
+  rename(UNITID = unitid) %>% distinct(schname, .keep_all = TRUE)
+gtrend <- gtrend %>% 
+  mutate(Day = substr(monthorweek, 1, 10)) %>%
+  mutate(Day = as.Date(Day))
+
+id <- merge(x = rm_dup, y = college_score, by = c('UNITID', 'OPEID'), all.x = TRUE)
+combine <- merge(x = id, y = gtrend, by = 'schname', all.x = TRUE)
+teat <- combine %>% na.omit()
+teat <- teat %>%
+  rename(median_earn = 'md_earn_wne_p10-REPORTED-EARNINGS') %>%
+  filter(median_earn != 'NULL') %>%
+  mutate(median_earn = as.numeric(median_earn))
+gray <- teat %>%
+  group_by(keynum) %>%
+  summarise(sdindex = (index - mean(index)) / sd(index), schname, CONTROL, 
+            keyword, monthorweek, keynum, sdindex, median_earn, Day)
+teat <- teat %>%
+  select('UNITID', 'OPEID', 'schname', 'CITY', 'STABBR', 'PREDDEG', 'LOCALE', 'keyword', 'monthorweek', 'keynum', 'index', 'median_earn', 'Day')
+gray2 <- na.omit(gray)
+median <- median(gray2$median_earn)
+mean <- mean(gray2$median_earn)
+split <- 38400
+atlas <- gray2
+atlas$High <- ifelse(atlas$median_earn >= split, 1, 0)
+
+Pre <- atlas %>% 
+  filter(Day < '2015-09-01')
+Post <- atlas %>%
+  filter(Day >= '2015-09-01')
+
+PostHigh <- atlas %>%
+  filter(High == 1) %>%
+  filter(Day >= '2015-09-01')
+PostLow <- atlas %>%
+  filter(High == 0) %>%
+  filter(Day >= '2015-09-01')
+PreHigh <- atlas %>%
+  filter(High == 1) %>%
+  filter(Day < '2015-09-01')
+PreLow <- atlas %>%
+  filter(High == 0) %>%
+  filter(Day < '2015-09-01')
+
+
 ggplot(data = Pre, aes(Day, median_earn)) +
   geom_smooth() + ggtitle("Pre Sept 2015")
 
