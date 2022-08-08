@@ -8,6 +8,7 @@ library(estimatr)
 library(fixest)
 library(jtools)
 library(ggstance)
+library(ggplot2)
 
 
 #Google Trends
@@ -56,9 +57,7 @@ median <- median(gray2$median_earn)
 mean <- mean(gray2$median_earn)
 
 ##There is a median of 37,800 and mean of 39,036 for earnings
-
-#Split out High and Low based on these numbers, will set it at 38,400 based on splitting
-# the difference of both
+#Split out High and Low based on these numbers, set it at 38,400 based on splitting difference
 split <- 38400
 atlas <- gray2
 
@@ -74,6 +73,25 @@ uno <- lm(data = Pre, median_earn ~ sdindex + factor(CONTROL))
 dos <- lm(data = Post, median_earn ~ sdindex + factor(CONTROL))
 
 export_summs(uno, dos)
+
+
+
+PostHigh <- atlas %>%
+  filter(High == 1) %>%
+  filter(Day >= '2015-09-01')
+PostLow <- atlas %>%
+  filter(High == 0) %>%
+  filter(Day >= '2015-09-01')
+
+
+PreHigh <- atlas %>%
+  filter(High == 1) %>%
+  filter(Day < '2015-09-01')
+PreLow <- atlas %>%
+  filter(High == 0) %>%
+  filter(Day < '2015-09-01')
+
+
 
 #Graphs
 ggplot(data = PreHigh, aes(sdindex, median_earn)) +
@@ -93,22 +111,6 @@ mean(Pre$median_earn)
 mean(Post$median_earn)
 
 
-PostHigh <- atlas %>%
-  filter(High == 1) %>%
-  filter(Day >= '2015-09-01')
-PostLow <- atlas %>%
-  filter(High == 0) %>%
-  filter(Day >= '2015-09-01')
-
-
-PreHigh <- atlas %>%
-  filter(High == 1) %>%
-  filter(Day < '2015-09-01')
-PreLow <- atlas %>%
-  filter(High == 0) %>%
-  filter(Day < '2015-09-01')
-
-#Percentage of high earners before - 47.7% | after - 47.6%
 
 high_pre <- feols(median_earn ~ sdindex, data = PreHigh)
 low_pre <- feols(median_earn ~ sdindex, data = PreLow)
@@ -132,17 +134,19 @@ g24  <- feols(median_earn ~ sdindex + CONTROL, data = Post)
 g2 <- feols(median_earn ~ sdindex + High, data = Post)
 
 another <- feols(median_earn ~ sdindex + CONTROL * High, data = Pre)
-another <- feols(median_earn ~ sdindex +  CONTROL * High, data = Post)
+another2 <- feols(median_earn ~ sdindex +  CONTROL * High, data = Post)
 
-anotha <- feols(sdindex ~ CONTROL * High, data = Pre)
-anotha2 <- feols(sdindex ~ CONTROL * High, data = Post)
+anotha <- feols(sdindex ~ CONTROL + High, data = Pre)
+anotha2 <- feols(sdindex ~ CONTROL + High, data = Post)
 
-etable(t77, g2)
-etable(t7, g24)
+t1 <- feols(sdindex ~ High, data = Pre)
+t2 <- feols(sdindex ~ High, data = Post)
+
+
+
+etable(t1, t2)
 etable(another, another2)
 etable(anotha, anotha2)
-summary(t77)
-summary(g2)
 summary(another)
 summary(another2)
 
@@ -158,24 +162,8 @@ wald(another2, c('sdindex','CONTROL', 'High'))
 wald(t77, 'sdindex')
 wald(g2, 'sdindex')
 
-t71 <- feols(median_earn ~ sdindex, data = PreLow)
-g4 <- feols(median_earn ~ sdindex, data = PostLow)
-etable(t71, g2)
-
-t1 <- feols(median_earn ~ sdindex, data = PreHigh)
-gr4 <- feols(median_earn ~ sdindex, data = PostHigh)
-etable(t1, gr4)
-
-t71 <- feols(median_earn ~ sdindex, data = PreLow)
-g4 <- feols(median_earn ~ sdindex, data = PostLow)
-etable(t71, g2)
 
 
-t1 <- feols(sdindex ~ High, data = Pre)
-t2 <- feols(sdindex ~ High, data = Post)
-etable(t1, t2)
-summary(t1)
-summary(t2)
 
 
 
