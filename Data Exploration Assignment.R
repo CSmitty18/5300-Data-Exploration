@@ -44,8 +44,8 @@ gray <- teat %>%
   summarise(sdindex = (index - mean(index)) / sd(index), schname, CONTROL, 
             keyword, monthorweek, keynum, sdindex, median_earn, Day)
 
-#I like to name my stuff in all coding as random names or sports players
-# so if you see names like teat, ignore me, I am just trying to remember them
+#I like to name my stuff in all coding as random names or players on my teams
+# so if you see names like teat, I am just trying to remember them
 # a little better and make it fun
 
 teat <- teat %>%
@@ -76,14 +76,14 @@ dos <- lm(data = Post, median_earn ~ sdindex + factor(CONTROL))
 export_summs(uno, dos)
 
 #Graphs
-ggplot(data = Pre, aes(sdindex, median_earn)) +
+ggplot(data = PreHigh, aes(sdindex, median_earn)) +
   geom_smooth() + ggtitle("Pre Sept 2015")
-ggplot(data = Post, aes(sdindex, median_earn)) +
+ggplot(data = PostHigh, aes(sdindex, median_earn)) +
   geom_smooth() + ggtitle("Post Sept 2015")
 
-ggplot(data = Pre, aes(Day, median_earn)) +
+ggplot(data = PreLow, aes(Day, median_earn)) +
   geom_smooth() + ggtitle("Pre Sept 2015")
-ggplot(data = Post, aes(Day, median_earn)) +
+ggplot(data = PostLow, aes(Day, median_earn)) +
   geom_smooth() + ggtitle("Post Sept 2015")
 
 
@@ -134,6 +134,7 @@ g2 <- feols(median_earn ~ sdindex + High, data = Post)
 another <- feols(median_earn ~ sdindex + CONTROL * High, data = Pre)
 another2 <- feols(median_earn ~ sdindex + CONTROL * High, data = Post)
 
+
 etable(t77, g2)
 etable(t7, g24)
 etable(another, another2)
@@ -145,9 +146,11 @@ summary(another2)
 
 ggplot(data = Pre, aes(Day, median_earn)) +
   geom_smooth() + ggtitle("Pre Sept 2015")
-abline(feols(median_earn ~ sdindex + CONTROL * High, data = Pre), col='red')
 
 ggplot(data = Post, aes(Day, median_earn)) +
   geom_smooth() + ggtitle("Post Sept 2015")
 
-
+wald(another, c('sdindex','CONTROL', 'High'))
+wald(another2, c('sdindex','CONTROL', 'High'))
+wald(t77, 'sdindex')
+wald(g2, 'sdindex')
