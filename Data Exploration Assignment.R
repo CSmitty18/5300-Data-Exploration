@@ -132,12 +132,15 @@ g24  <- feols(median_earn ~ sdindex + CONTROL, data = Post)
 g2 <- feols(median_earn ~ sdindex + High, data = Post)
 
 another <- feols(median_earn ~ sdindex + CONTROL * High, data = Pre)
-another2 <- feols(median_earn ~ sdindex + CONTROL * High, data = Post)
+another <- feols(median_earn ~ sdindex +  CONTROL * High, data = Post)
 
+anotha <- feols(sdindex ~ CONTROL * High, data = Pre)
+anotha2 <- feols(sdindex ~ CONTROL * High, data = Post)
 
 etable(t77, g2)
 etable(t7, g24)
 etable(another, another2)
+etable(anotha, anotha2)
 summary(t77)
 summary(g2)
 summary(another)
@@ -154,3 +157,26 @@ wald(another, c('sdindex','CONTROL', 'High'))
 wald(another2, c('sdindex','CONTROL', 'High'))
 wald(t77, 'sdindex')
 wald(g2, 'sdindex')
+
+t71 <- feols(median_earn ~ sdindex, data = PreLow)
+g4 <- feols(median_earn ~ sdindex, data = PostLow)
+etable(t71, g2)
+
+t1 <- feols(median_earn ~ sdindex, data = PreHigh)
+gr4 <- feols(median_earn ~ sdindex, data = PostHigh)
+etable(t1, gr4)
+
+t71 <- feols(median_earn ~ sdindex, data = PreLow)
+g4 <- feols(median_earn ~ sdindex, data = PostLow)
+etable(t71, g2)
+
+
+t1 <- feols(sdindex ~ High, data = Pre)
+t2 <- feols(sdindex ~ High, data = Post)
+etable(t1, t2)
+summary(t1)
+summary(t2)
+
+
+
+
